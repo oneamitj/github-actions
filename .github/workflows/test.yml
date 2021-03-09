@@ -30,7 +30,7 @@ jobs:
           echo "====================================="
 
       - name: Set env to for other branch
-        if: !endsWith(github.ref, '/master') && !endsWith(github.ref, '/dev') && !endsWith(github.ref, '/dev')
+        if: (!endsWith(github.ref, '/master') && !endsWith(github.ref, '/dev') && !endsWith(github.ref, '/dev'))
         env:
           MYENVVAR: "this is other branch"
         run: |
