@@ -1,0 +1,26 @@
+name: Testing GitHub Actions
+
+on:
+  push:
+    branches: [ main, dev ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set env to for main
+        if: endsWith(github.ref, '/main')
+        env:
+          MYENVVAR: "for main environment"
+      - name: Set env to for dev
+        if: endsWith(github.ref, '/dev')
+        env:
+          MYENVVAR: "dev is here"
+      - name: Echo env var name
+        run: |
+          echo "====================================="
+          echo $MYENVVAR
+          echo "====================================="
