@@ -15,12 +15,16 @@ jobs:
         if: endsWith(github.ref, '/main')
         env:
           MYENVVAR: "for main environment"
-      - name: Set env to for dev
-        if: endsWith(github.ref, '/dev')
-        env:
-          MYENVVAR: "dev is here"
-      - name: Echo env var name
         run: |
           echo "====================================="
           echo $MYENVVAR
           echo "====================================="
+
+      - name: Set env to for dev
+        if: endsWith(github.ref, '/dev')
+        env:
+          MYENVVAR: "dev is here"
+          run: |
+            echo "====================================="
+            echo $MYENVVAR
+            echo "====================================="
