@@ -29,6 +29,15 @@ jobs:
           echo $MYENVVAR
           echo "====================================="
 
+      - name: Set env to for master
+        if: endsWith(github.ref, '/master')
+        env:
+          MYENVVAR: "master is here"
+        run: |
+          echo "====================================="
+          echo $MYENVVAR
+          echo "====================================="
+
       - name: Set env to for other branch
         if: (!endsWith(github.ref, '/master') && !endsWith(github.ref, '/dev') && !endsWith(github.ref, '/dev'))
         env:
