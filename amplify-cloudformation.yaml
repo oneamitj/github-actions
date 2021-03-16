@@ -1,0 +1,159 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: "Deploys Amplify app, domain, and sets branch to track.  Taken from AWS samples."
+
+Parameters:
+
+  pAppName:
+    Type: "String"
+    Description: "Name of application you are deploying"
+
+  pGitRepository:
+    Type: "String"
+    Description: "GitHub Repository URL"
+
+  pGitHubBranch:
+    Type: "String"
+    Description: "GitHub branch to track for changes"
+
+  pGitHubOauthToken:
+    Type: "String"
+    Description: "Github Personal Access Token.  Needs repo access at a minimum"
+    NoEcho: true
+
+  pDomainName:
+    Type: "String"
+    Description: "Domain name to host application"
+
+  pPrefix:
+    Type: "String"
+    Description: "prefix name for application"
+    Default: "amplify"
+
+  pAppDescription:
+    Type: "String"
+    Description: "Description of the application (ex-node web app for backend)"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: "Amplify Settings"
+          Parameters:
+            - pAppName
+            - pGitRepository
+            - pGitHubBranch
+            - pGitHubOauthToken
+            - pDomainName
+            - pPrefix
+            - pAppDescription
+      ParameterLabels:
+        pAppName:
+          default: "Name of application you are deploying"
+        pGitRepository:
+          default: "GitHub Repository URL (aka https cloning URL - https://github.com/org/repo.git)"
+        pGitHubBranch:
+          default: "GitHub branch to track for changes"
+        pGitHubOauthToken:
+          default: "Github Personal Access Token.  Needs repo access at a minimum"
+        pDomainName:
+          default: "Domain name to host application - ex - ttt.amitj.com.np"
+        pPrefix:
+          default: "prefix name for application"
+        pAppDescription:
+          default: "Description of the application (ex-node web app for backend)"
+
+
+Resources:
+
+  iamAmplifyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - amplify.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: Amplify
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "amplify:*"
+                Resource: "*"
+
+  amplifyApp:
+    Type: "AWS::Amplify::App"
+    Properties:
+      Name: !Ref pAppName
+      Repository: !Ref pGitRepository
+      Description: !Ref pAppDescription
+      OauthToken: !Ref pGitHubOauthToken
+      BuildSpec: |-
+        version: 0.1
+        frontend:
+          phases:
+            preBuild:
+              commands:
+                - npm install
+            build:
+              commands:
+                - npm run-script build
+          artifacts:
+            # IMPORTANT - Please verify your build output directory
+            baseDirectory: /build
+            files:
+              - '**/*'
+          cache:
+            paths:
+              - node_modules/**/*
+
+      Tags:
+        - Key: Name
+          Value: !Ref pAppName
+      #### Customize this if you want specific rewrite rules ala .htaccess
+      #CustomRules:
+      #  - Source: /dist/vue.min.js
+      #    Target: /vue.min.js
+      #    Status: '200'
+      IAMServiceRole: !GetAtt iamAmplifyRole.Arn
+
+  amplifyBranch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      BranchName: !Ref pGitHubBranch
+      AppId: !GetAtt amplifyApp.AppId
+      Description: !Join [ "-", [ "Branch", !Ref pGitHubBranch ] ]
+      EnableAutoBuild: true
+      Tags:
+        - Key: Name
+          Value: !Ref pAppName
+        - Key: DomainName
+          Value: !Ref pDomainName
+        - Key: Branch
+          Value: !Ref pGitHubBranch
+
+  amplifyDomain:
+    Type: AWS::Amplify::Domain
+    Properties:
+      DomainName: !Ref pDomainName
+      AppId: !GetAtt amplifyApp.AppId
+      SubDomainSettings:
+        - Prefix: !Ref pPrefix
+          BranchName: !GetAtt amplifyBranch.BranchName
+
+Outputs:
+  DefaultDomain:
+    Value: !GetAtt amplifyApp.DefaultDomain
+
+  MasterBranchUrl:
+    Value: !Join [ ".", [ !GetAtt amplifyBranch.BranchName, !GetAtt amplifyDomain.DomainName ]]
+
+  Version:
+    Value: "amplify-template-0.1"
+    Description: "Template Version"
