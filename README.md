@@ -1,3 +1,7 @@
+# Source of tic-tac-toe codes
+
+https://blog.alexdevero.com/how-to-build-simple-tic-tac-toe-game-with-react/
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
